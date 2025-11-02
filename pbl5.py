@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 from scipy.signal import firwin, filtfilt
 
 # =========================================================
-# 🧠 Bước 1: Khởi tạo & load datasheet
+# Bước 1: Khởi tạo & load datasheet
 # =========================================================
 gdf_path = "D:/UNIVERSITY/PBL5/Datasets_PBL5/A01T.gdf"
 
 # Đọc dữ liệu GDF
 raw = mne.io.read_raw_gdf(gdf_path, preload=True)
-print("✅ Đã load file EEG:", gdf_path)
+print("Đã load file EEG:", gdf_path)
 
 # =========================================================
-# ⚙️ Bước 2: Cấu hình tham số
+# Bước 2: Cấu hình tham số
 # =========================================================
 fs = raw.info['sfreq']            # Tần số lấy mẫu
 window_len = 2.5                  # Thời gian mỗi epoch (giây)
@@ -25,10 +25,10 @@ data_raw = raw.get_data()[:n_channels, :]
 
 # Thiết kế bộ lọc FIR band-pass 8–30 Hz
 bp_coeff = firwin(101, [8, 30], pass_zero=False, fs=fs)
-print("✅ Đã thiết kế bộ lọc FIR 8–30 Hz")
+print("Đã thiết kế bộ lọc FIR 8–30 Hz")
 
 # =========================================================
-# ✂️ Bước 3: Tách epoch & tiền xử lý
+# Bước 3: Tách epoch & tiền xử lý
 # =========================================================
 # Lấy thông tin cue onset từ annotations
 events, event_id = mne.events_from_annotations(raw)
@@ -66,10 +66,10 @@ for event in events:
 epochs = np.array(epochs)
 labels = np.array(labels)
 
-print(f"✅ Đã tách {len(epochs)} epoch | Mỗi epoch dài {epochs.shape[2]/fs:.2f}s ({epochs.shape[2]} mẫu).")
+print(f"Đã tách {len(epochs)} epoch | Mỗi epoch dài {epochs.shape[2]/fs:.2f}s ({epochs.shape[2]} mẫu).")
 
 # =========================================================
-# 📊 Hiển thị dạng sóng của một epoch bất kỳ
+# Hiển thị dạng sóng của một epoch bất kỳ
 # =========================================================
 epoch_idx = 6  # ví dụ: epoch thứ 7
 plt.figure(figsize=(10, 4))
