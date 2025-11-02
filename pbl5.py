@@ -68,13 +68,45 @@ labels = np.array(labels)
 
 print(f"Đã tách {len(epochs)} epoch | Mỗi epoch dài {epochs.shape[2]/fs:.2f}s ({epochs.shape[2]} mẫu).")
 
+# # =========================================================
+# # Hiển thị dạng sóng của một epoch bất kỳ
+# epoch_idx = 10  # ví dụ: epoch thứ 10
+# plt.figure(figsize=(10, 4))
+# plt.plot(epochs[epoch_idx].T)
+# plt.title(f"Dạng sóng EEG - Epoch {epoch_idx+1} | Label: {labels[epoch_idx]}")
+# plt.xlabel("Thời gian (mẫu)")
+# plt.ylabel("Biên độ (µV)")
+# plt.show()
+
 # =========================================================
-# Hiển thị dạng sóng của một epoch bất kỳ
+# Bước 4: Dọn dữ liệu
 # =========================================================
-epoch_idx = 6  # ví dụ: epoch thứ 7
-plt.figure(figsize=(10, 4))
-plt.plot(epochs[epoch_idx].T)
-plt.title(f"Dạng sóng EEG - Epoch {epoch_idx+1} | Label: {labels[epoch_idx]}")
-plt.xlabel("Thời gian (mẫu)")
-plt.ylabel("Biên độ (µV)")
-plt.show()
+
+# Kiểm tra và loại epoch chứa NaN
+valid_idx = [i for i in range(len(epochs)) if not np.isnan(epochs[i]).any()]
+epochs = epochs[valid_idx]
+labels = labels[valid_idx]
+
+print(f"Đã loại bỏ epoch chứa NaN. Còn lại {len(epochs)} epoch hợp lệ.")
+
+# Kiểm tra số lượng trial theo từng lớp
+unique, counts = np.unique(labels, return_counts=True)
+print("Phân bố số trial theo lớp:")
+for u, c in zip(unique, counts):
+    print(f"  Lớp {u}: {c} trials")
+
+# =========================================================
+# Bước 5: Lọc chỉ giữ các lớp MI
+# =========================================================
+
+# Giữ lại chỉ các lớp MI (Motor Imagery): 7, 8, 9, 10
+valid_classes = [7, 8, 9, 10]
+sel_idx = np.isin(labels, valid_classes)
+epochs = epochs[sel_idx]
+labels = labels[sel_idx]
+
+print(f"Sau khi lọc MI, còn {len(epochs)} epoch")
+print("Phân bố lớp MI:")
+unique, counts = np.unique(labels, return_counts=True)
+for u, c in zip(unique, counts):
+    print(f"  Lớp {u}: {c} trials")
