@@ -1,32 +1,80 @@
 import mne
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import filtfilt, firwin
+from scipy.signal import firwin, filtfilt
 
-# Đường dẫn dữ liệu EEG
+# =========================================================
+# 🧠 Bước 1: Khởi tạo & load datasheet
+# =========================================================
 gdf_path = "D:/UNIVERSITY/PBL5/Datasets_PBL5/A01T.gdf"
 
-# 1) Đọc dữ liệu GDF
+# Đọc dữ liệu GDF
 raw = mne.io.read_raw_gdf(gdf_path, preload=True)
-fs = raw.info['sfreq']
-data_raw = raw.get_data()[:22, :]
+print("✅ Đã load file EEG:", gdf_path)
 
-# 2) Thiết kế và áp dụng bộ lọc FIR 8–30Hz
+# =========================================================
+# ⚙️ Bước 2: Cấu hình tham số
+# =========================================================
+fs = raw.info['sfreq']            # Tần số lấy mẫu
+window_len = 2.5                  # Thời gian mỗi epoch (giây)
+offset = 0.5                      # Thời gian trễ (giây)
+n_channels = 22                   # Số kênh EEG sử dụng
+
+# Lấy dữ liệu EEG gốc (22 kênh đầu)
+data_raw = raw.get_data()[:n_channels, :]
+
+# Thiết kế bộ lọc FIR band-pass 8–30 Hz
 bp_coeff = firwin(101, [8, 30], pass_zero=False, fs=fs)
-data_filt = filtfilt(bp_coeff, [1.0], data_raw, axis=1)
+print("✅ Đã thiết kế bộ lọc FIR 8–30 Hz")
 
-# 3) Zero-mean theo kênh
-data_zm = data_filt - np.mean(data_filt, axis=1, keepdims=True)
+# =========================================================
+# ✂️ Bước 3: Tách epoch & tiền xử lý
+# =========================================================
+# Lấy thông tin cue onset từ annotations
+events, event_id = mne.events_from_annotations(raw)
+print("Danh sách sự kiện:", event_id)
+print("Tổng số sự kiện:", len(events))
 
-# 4) Hiển thị 5 giây đầu của kênh 1
-t = np.arange(data_raw.shape[1]) / fs
-plt.figure(figsize=(12, 6))
-plt.subplot(2, 1, 1)
-plt.plot(t[:int(fs*5)], data_raw[0, :int(fs*5)], color='gray')
-plt.title("EEG gốc - Trước xử lý (Kênh 1)")
-plt.subplot(2, 1, 2)
-plt.plot(t[:int(fs*5)], data_zm[0, :int(fs*5)], color='blue')
-plt.title("EEG sau lọc 8–30Hz & Zero-mean (Kênh 1)")
-plt.xlabel("Thời gian (s)")
-plt.tight_layout()
+samples_window = int(window_len * fs)
+samples_offset = int(offset * fs)
+
+epochs = []
+labels = []
+
+for event in events:
+    onset = event[0]              # vị trí mẫu của cue onset
+    label = event[2]              # mã sự kiện (class)
+    
+    start = int(onset + samples_offset)
+    stop = int(start + samples_window)
+    
+    # Kiểm tra nằm trong giới hạn dữ liệu
+    if stop <= data_raw.shape[1]:
+        # Cắt epoch
+        epoch = data_raw[:, start:stop]
+        
+        # Lọc tín hiệu từng epoch
+        epoch_filt = filtfilt(bp_coeff, [1.0], epoch, axis=1)
+        
+        # Zero-mean theo kênh
+        epoch_zm = epoch_filt - np.mean(epoch_filt, axis=1, keepdims=True)
+        
+        # Lưu lại
+        epochs.append(epoch_zm)
+        labels.append(label)
+
+epochs = np.array(epochs)
+labels = np.array(labels)
+
+print(f"✅ Đã tách {len(epochs)} epoch | Mỗi epoch dài {epochs.shape[2]/fs:.2f}s ({epochs.shape[2]} mẫu).")
+
+# =========================================================
+# 📊 Hiển thị dạng sóng của một epoch bất kỳ
+# =========================================================
+epoch_idx = 6  # ví dụ: epoch thứ 7
+plt.figure(figsize=(10, 4))
+plt.plot(epochs[epoch_idx].T)
+plt.title(f"Dạng sóng EEG - Epoch {epoch_idx+1} | Label: {labels[epoch_idx]}")
+plt.xlabel("Thời gian (mẫu)")
+plt.ylabel("Biên độ (µV)")
 plt.show()
