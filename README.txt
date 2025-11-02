@@ -32,7 +32,7 @@ Bước 8: Áp dụng lên test, đánh giá & lưu tham số
         dự đoán (score = X * Wlda + b), in accuracy + confusion matrix, 
         lưu tham số (params_holdout.mat) để triển khai.
 
-👉 Phần này giống như “học trước” để FPGA chỉ cần “áp dụng” chứ không phải tự học.
+//Phần này giống như “học trước” để FPGA chỉ cần “áp dụng” chứ không phải tự học.
 
 2. Thực thi trên FPGA
 
